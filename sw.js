@@ -1,63 +1,21 @@
-// sw.js - Service Worker for Muhur PWA
-const CACHE_NAME = 'muhur-v3';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/js/swisseph.js',
-  '/js/panchang-engine.js',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+const CACHE_NAME = "muhur-v3";
+const STATIC = [
+  "/muhur/",
+  "/muhur/index.html",
+  "/muhur/js/swisseph.js",
+  "/muhur/js/panchang-engine.js",
+  "/muhur/manifest.json"
 ];
-const DYNAMIC_CACHE = 'muhur-dynamic-v2';
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
-  );
+self.addEventListener("install", e=>{
+  e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(STATIC)));
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.map(key => {
-        if(key !== CACHE_NAME && key !== DYNAMIC_CACHE) return caches.delete(key);
-      })
-    )).then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // Always fetch WASM and ephemeris files fresh
-  if(url.pathname.endsWith('.wasm') || url.pathname.includes('/ephe/')){
-    event.respondWith(fetch(event.request));
+self.addEventListener("fetch", e=>{
+  if(e.request.url.endsWith(".wasm") || e.request.url.includes("/ephe/")){
     return;
   }
-
-  // Cache PDFs and images dynamically
-  if(event.request.url.endsWith('.pdf') || event.request.url.endsWith('.png')){
-    event.respondWith(
-      caches.open(DYNAMIC_CACHE).then(cache =>
-        fetch(event.request).then(response => {
-          cache.put(event.request, response.clone());
-          return response;
-        }).catch(() => caches.match(event.request))
-      )
-    );
-    return;
-  }
-
-  // Cache-first for static assets
-  event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
-      if(event.request.method === 'GET' && response.status === 200 && response.type === 'basic'){
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
-      }
-      return response;
-    })).catch(() => {
-      if(event.request.mode === 'navigate') return caches.match('/index.html');
-    })
+  e.respondWith(
+    caches.match(e.request).then(r=>r || fetch(e.request))
   );
 });
