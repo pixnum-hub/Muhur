@@ -2,67 +2,52 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Muhur</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#121212">
+
 <style>
-  body { font-family: system-ui, sans-serif; background: #121212; color: #fff; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; }
-  .app { width: 95%; max-width: 500px; margin-top: 10px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 20px; backdrop-filter: blur(10px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  .toggle-dark { position: fixed; top: 15px; right: 15px; width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; background: rgba(255,255,255,0.1); }
-  .muhurta { margin: 5px 0; padding: 8px; border-radius: 8px; }
-  .auspicious { background: rgba(0,255,0,0.2); }
-  .neutral { background: rgba(255,255,0,0.2); }
-  .night { background: rgba(0,0,255,0.2); }
-  #calendar { margin: 15px 0; }
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#0b0b0b;
+  color:#fff;
+  display:flex;
+  justify-content:center;
+}
+.app{
+  width:100%;
+  max-width:420px;
+  padding:16px;
+}
+input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+}
+.card{
+  margin-top:16px;
+  padding:14px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.08);
+}
 </style>
 </head>
+
 <body>
-<div class="toggle-dark" onclick="toggleDarkMode()">🌙</div>
 <div class="app">
-  <h1>Muhur</h1>
-  <input type="date" id="calendar">
-  <div id="panchang">
-    <p id="tithi"></p>
-    <p id="nakshatra"></p>
-    <p id="yoga"></p>
-    <p id="karana"></p>
-    <p id="festival"></p>
-  </div>
-  <h2>Muhurtas</h2>
-  <div id="muhurtas"></div>
+  <input type="date" id="datePicker">
+  <div id="output" class="card">Select a date</div>
 </div>
-<script src="/js/swisseph.js"></script>
-<script src="/js/panchang-engine.js"></script>
+
+<script src="/muhur/js/swisseph.js"></script>
+<script src="/muhur/js/panchang-engine.js"></script>
+
 <script>
-(async function(){
-  await swe.initSwissEph();
-
-  const calendar = document.getElementById('calendar');
-  calendar.valueAsDate = new Date();
-
-  function refreshAll(){
-    const selectedDate = calendar.valueAsDate;
-    const pan = panchangAt(selectedDate);
-    document.getElementById('tithi').textContent = 'Tithi: ' + tithiNames[pan.tithi];
-    document.getElementById('nakshatra').textContent = 'Nakshatra: ' + nakNames[pan.nakshatra];
-    document.getElementById('yoga').textContent = 'Yoga: ' + yogaNames[pan.yoga];
-    document.getElementById('karana').textContent = 'Karana: ' + karanaNames[pan.karana];
-    document.getElementById('festival').textContent = 'Festival: ' + (festivalAt(selectedDate) || 'None');
-    document.getElementById('muhurtas').innerHTML = renderMuhurtasHTML();
-  }
-
-  calendar.addEventListener('change', refreshAll);
-  refreshAll();
-
-  window.toggleDarkMode = function(){
-    document.body.classList.toggle('dark');
-  };
-})();
-</script>
-<script>
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js');
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/muhur/sw.js');
 }
 </script>
 </body>
