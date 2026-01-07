@@ -68,7 +68,57 @@ footer{text-align:center;font-size:12px;opacity:.8;margin-top:10px;}
 
 <script>
 // ==== Global variables ====
-let lastLat=28.6139,lastLon=77.2090;
+let lastLat = 28.6139; // default Delhi
+let lastLon = 77.2090;
+
+// ==== City dropdown & default ====
+const cities = {
+  "Delhi, India": [28.6139, 77.2090],
+  "Mumbai, India": [19.076, 72.8777],
+  "London, UK": [51.5074, -0.1278],
+  "New York, USA": [40.7128, -74.006],
+  "Tokyo, Japan": [35.6895, 139.6917]
+};
+
+const sel = document.getElementById("city");
+Object.keys(cities).forEach(city=>{
+  let option = document.createElement("option");
+  option.textContent = city;
+  sel.appendChild(option);
+});
+
+// default selection
+sel.value = "Delhi, India";
+[lastLat, lastLon] = cities[sel.value];
+document.getElementById("locationBox").innerHTML = `<b>Location:</b> ${sel.value}`;
+
+// onchange
+sel.onchange = ()=>{
+  [lastLat,lastLon] = cities[sel.value];
+  document.getElementById("locationBox").innerHTML = `<b>Location:</b> ${sel.value}`;
+  refreshAll();
+};
+
+// ==== GPS fallback ====
+function useGPS() {
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      p=>{
+        lastLat = p.coords.latitude;
+        lastLon = p.coords.longitude;
+        document.getElementById("locationBox").innerHTML = `<b>Location:</b> Current GPS`;
+        refreshAll();
+      },
+      ()=>{
+        console.warn("GPS denied/unavailable. Using default city.");
+        refreshAll();
+      }
+    );
+  } else {
+    console.warn("Geolocation not supported. Using default city.");
+    refreshAll();
+  }
+}
 
 // ==== Ayanamsa toggle ====
 function setAyanamsa(mode){
@@ -128,7 +178,7 @@ function loadDate(date){
 
 // ==== Muhurta rendering ====
 function renderMuhurtas(date=new Date()){
- const dayLength = 12; // simplified division
+ const dayLength = 12; // simplified
  const muhurtasHTML = muhurtaNames.map((name,i)=>{
   const startH = i<15 ? 6+i : 18+(i-15);
   const endH = startH+1;
@@ -146,31 +196,13 @@ function highlightCurrentMuhurta(date){
  if(muhEl[idx]) { muhEl[idx].classList.add("active"); muhEl[idx].scrollIntoView({behavior:"smooth", block:"center"});}
 }
 
-// ==== GPS / Cities ====
-function useGPS(){
- navigator.geolocation.getCurrentPosition(async p=>{
-  lastLat=p.coords.latitude; lastLon=p.coords.longitude;
-  document.getElementById("locationBox").innerHTML=`<b>Location:</b> Current GPS`;
-  refreshAll();
- });
-}
-
-const sel=document.getElementById("city");
-const cities={"Delhi, India":[28.6139,77.2090],"Mumbai, India":[19.076,72.8777],"London, UK":[51.5074,-0.1278],"New York, USA":[40.7128,-74.006],"Tokyo, Japan":[35.6895,139.6917]};
-Object.keys(cities).forEach(c=>{
- let o=document.createElement("option");
- o.textContent=c; sel.appendChild(o);
-});
-sel.selectedIndex=0;
-sel.onchange=()=>{[lastLat,lastLon]=cities[sel.value];document.getElementById("locationBox").innerHTML=`<b>Location:</b> ${sel.value}`;refreshAll();};
-
-// ==== Refresh UI ====
-function refreshAll(){renderPanchang(new Date());renderMuhurtas(new Date());buildCalendar();}
-
 // ==== Export functions ====
 function exportImage(){html2canvas(document.body).then(c=>{let a=document.createElement("a");a.href=c.toDataURL();a.download="Panchang.png";a.click();});}
 function exportDailyPDF(){const{jsPDF}=window.jspdf;const p=new jsPDF();p.html(document.querySelector(".app"),{callback:()=>p.save("Daily-Panchang.pdf")});}
 function exportMonthlyPDF(){const{jsPDF}=window.jspdf;const p=new jsPDF();p.text("Monthly Panchang",10,10);p.save("Monthly-Panchang.pdf");}
+
+// ==== Refresh UI ====
+function refreshAll(){renderPanchang(new Date());renderMuhurtas(new Date());buildCalendar();}
 
 // ==== Init ====
 refreshAll();
